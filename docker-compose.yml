@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: accelerator_provider
+    ports:
+      - "5434:5432"
+    volumes:
+      - accelerator-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d accelerator_provider"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  accelerator-provider:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql://admin:password@postgres:5432/accelerator_provider
+      REDIS_URL: redis://redis:6379/0
+      CONTROL_PLANE_API_URL: http://controlplane-api:8000
+      CONTROL_PLANE_AUTH_URL: https://auth.itlusions.com
+      DGX_PLATFORM_API_URL: http://dgx-platform:9504
+      LOG_LEVEL: DEBUG
+    ports:
+      - "8003:8003"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src
+    command: uvicorn src.itl_accelerator_provider.main:app --host 0.0.0.0 --port 8003 --reload
+
+volumes:
+  accelerator-db:
+
+networks:
+  default:
+    name: control-plane
+    driver: bridge
