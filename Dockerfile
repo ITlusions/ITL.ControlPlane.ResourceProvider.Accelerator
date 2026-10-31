@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM python:3.12-slim
 
 WORKDIR /app
@@ -8,14 +9,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements
 COPY pyproject.toml .
-
-# Install Python dependencies
-RUN pip install --no-cache-dir -e ".[postgres,redis,monitoring]"
-
-# Copy source code
 COPY src/ src/
+
+# docker build --secret id=forgejo_token,env=FORGEJO_PACKAGE_TOKEN .
+RUN --mount=type=secret,id=forgejo_token \
+    pip install --no-cache-dir \
+      --index-url "https://itladmin:$(cat /run/secrets/forgejo_token)@git.itlusions.com/api/packages/ITlusions/pypi/simple/" \
+      --extra-index-url https://pypi.org/simple/ \
+      -e ".[postgres,redis,monitoring]"
+
 COPY alembic/ alembic/
 COPY alembic.ini .
 
