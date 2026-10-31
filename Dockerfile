@@ -19,9 +19,6 @@ RUN --mount=type=secret,id=forgejo_token \
       --extra-index-url https://pypi.org/simple/ \
       -e ".[postgres,redis,monitoring]"
 
-COPY alembic/ alembic/
-COPY alembic.ini .
-
 # Expose port
 EXPOSE 8003
 
