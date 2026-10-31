@@ -36,6 +36,25 @@ jobs:
       - name: Install build tools
         run: python -m pip install --upgrade pip build twine
 
+      - name: Sync pyproject.toml version to the tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        # Confirmed live on a sibling repo's own first run: a tag (v0.1.1) with
+        # pyproject.toml still saying 0.1.0 builds and publishes the STALE version, then the
+        # verify step (correctly) fails trying to install the tag's version, which was never
+        # actually built. Deriving the version from the tag here removes the manual-sync step
+        # entirely rather than relying on remembering to bump pyproject.toml before tagging.
+        run: |
+          python -m pip install --quiet tomli tomli-w
+          python -c "
+          import tomli, tomli_w, os
+          with open('pyproject.toml', 'rb') as f:
+              data = tomli.load(f)
+          data['project']['version'] = os.environ['GITHUB_REF_NAME'].removeprefix('v')
+          with open('pyproject.toml', 'wb') as f:
+              tomli_w.dump(data, f)
+          print('pyproject.toml version set to', data['project']['version'])
+          "
+
       - name: Build package
         run: python -m build --sdist --wheel --outdir dist/
 
