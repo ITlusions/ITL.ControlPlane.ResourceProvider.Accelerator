@@ -22,6 +22,7 @@ classifiers = [
 ]
 
 dependencies = [
+    "itl-controlplane-sdk[fastapi,persistence-sqlalchemy]>=1.0.0",
     "fastapi>=0.104.0",
     "uvicorn[standard]>=0.24.0",
     "pydantic>=2.0.0",
@@ -60,9 +61,12 @@ Repository = "https://github.com/itlusions/ITL.ControlPlane.ResourceProvider.Acc
 Documentation = "https://docs.itlusions.com/control-plane/accelerator"
 Issues = "https://github.com/itlusions/ITL.ControlPlane.ResourceProvider.Accelerator/issues"
 
-[tool.setuptools]
-packages = ["src.itl_accelerator_provider"]
-package-dir = {"" = "."}
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
+[tool.setuptools.package-dir]
+"" = "."
 
 [tool.black]
 line-length = 100
