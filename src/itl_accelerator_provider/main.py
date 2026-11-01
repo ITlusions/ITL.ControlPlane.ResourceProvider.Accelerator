@@ -53,10 +53,13 @@ async def root():
     }
 
 
-# Include routers
-app.include_router(spark_nodes.router, prefix="/subscriptions", tags=["sparkNodes"])
-app.include_router(spark_instances.router, prefix="/subscriptions", tags=["sparkOllamaInstances"])
-app.include_router(spark_jobs.router, prefix="/subscriptions", tags=["sparkJobs"])
+# Each route module exposes a setup_*_routes(app, engine, provider) -> APIRouter
+# factory rather than a module-level `router` — none of the handlers inside use
+# engine/provider yet (all still TODO: Implement with storage engine), so None
+# placeholders are correct until that storage-engine wiring actually exists.
+app.include_router(spark_nodes.setup_spark_nodes_routes(app, None, None), prefix="/subscriptions", tags=["sparkNodes"])
+app.include_router(spark_instances.setup_spark_instances_routes(app, None, None), prefix="/subscriptions", tags=["sparkOllamaInstances"])
+app.include_router(spark_jobs.setup_spark_jobs_routes(app, None, None), prefix="/subscriptions", tags=["sparkJobs"])
 
 
 if __name__ == "__main__":
